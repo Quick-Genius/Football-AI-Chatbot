@@ -5,6 +5,8 @@ import os
 from dotenv import load_dotenv
 import logging
 import re
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # Load environment variables
 load_dotenv()
@@ -31,7 +33,7 @@ if not GEMINI_API_KEY:
 genai.configure(api_key=GEMINI_API_KEY)
 
 # Initialize the model
-model = genai.GenerativeModel('gemini-pro')
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # Football-specific context prompt
 FOOTBALL_CONTEXT = """
@@ -73,6 +75,13 @@ def is_football_related(message):
     message_lower = message.lower()
     return any(keyword in message_lower for keyword in football_keywords)
 
+# Add rate limiting
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["50 per minute"]
+)
+
 @app.route('/')
 def home():
     return jsonify({
@@ -89,20 +98,24 @@ def health_check():
     return jsonify({"status": "healthy", "service": "football-chatbot-api"})
 
 @app.route('/api/chat', methods=['POST', 'OPTIONS'])
+@limiter.limit("20 per minute")
 def chat():
     """Main chat endpoint"""
     # Handle preflight OPTIONS request
     if request.method == 'OPTIONS':
         return '', 200
     
+    logger.info(f"Received chat request from {request.remote_addr}")
+    
     try:
         data = request.get_json()
+        logger.debug(f"Request data: {data}")
         
-        # FIXED: Complete the if statement
         if not data or 'message' not in data:
             return jsonify({"error": "Message is required"}), 400
         
         user_message = sanitize_input(data['message'])
+        logger.info(f"Processing message: {user_message[:50]}...")
         
         if not user_message.strip():
             return jsonify({"error": "Message cannot be empty"}), 400
@@ -116,20 +129,43 @@ def chat():
         # Prepare the prompt with context
         full_prompt = f"{FOOTBALL_CONTEXT}\n\nUser question: {user_message}"
         
-        # Generate response using Gemini
-        response = model.generate_content(full_prompt)
-        
-        if not response.text:
-            return jsonify({"error": "Failed to generate response"}), 500
-        
-        return jsonify({
-            "response": response.text,
-            "user_message": user_message
-        })
-        
+        try:
+            # Generate response using Gemini with timeout
+            response = model.generate_content(
+                full_prompt,
+                safety_settings=[
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+                ]
+            )
+            
+            if not response:
+                logger.error("Null response from Gemini API")
+                return jsonify({"error": "Failed to generate response"}), 500
+                
+            if not hasattr(response, 'text'):
+                logger.error("Response missing text attribute")
+                return jsonify({"error": "Invalid response format"}), 500
+                
+            if not response.text or not response.text.strip():
+                logger.error("Empty response text from Gemini API")
+                return jsonify({"error": "Empty response from AI"}), 500
+            
+            logger.info("Successfully generated response")
+            return jsonify({
+                "response": response.text,
+                "user_message": user_message
+            })
+            
+        except Exception as api_error:
+            logger.error(f"Gemini API error: {str(api_error)}")
+            return jsonify({"error": "AI model error", "details": str(api_error)}), 500
+            
     except Exception as e:
-        logger.error(f"Error in chat endpoint: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
+        logger.error(f"General error in chat endpoint: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
 @app.route('/favicon.ico')
 def favicon():
