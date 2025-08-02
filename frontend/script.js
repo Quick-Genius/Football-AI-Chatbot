@@ -1,6 +1,7 @@
 class FootballChatbot {
     constructor() {
-        this.apiUrl = 'http://localhost:5001/api'; // Change this for production
+        // Use configuration from config.js
+        this.apiUrl = config.apiUrl;
         this.messageInput = document.getElementById('messageInput');
         this.sendButton = document.getElementById('sendButton');
         this.chatMessages = document.getElementById('chatMessages');

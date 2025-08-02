@@ -12,9 +12,11 @@ from flask_limiter.util import get_remote_address
 load_dotenv()
 
 app = Flask(__name__)
+
+# Simple CORS setup for deployment
 CORS(app, resources={
     r"/api/*": {
-        "origins": ["http://localhost:8000", "http://127.0.0.1:8000"],
+        "origins": "*",  # Allow all origins for simple deployment
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
@@ -75,7 +77,7 @@ def is_football_related(message):
     message_lower = message.lower()
     return any(keyword in message_lower for keyword in football_keywords)
 
-# Add rate limiting
+# Simple rate limiting (in-memory)
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
@@ -180,4 +182,9 @@ def internal_error(error):
     return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    # Get configuration from environment variables
+    debug_mode = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
+    host = os.getenv('HOST', '0.0.0.0')
+    port = int(os.getenv('PORT', 5001))
+    
+    app.run(debug=debug_mode, host=host, port=port)
