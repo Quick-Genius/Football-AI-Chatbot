@@ -20,7 +20,7 @@ if not FRONTEND_URL:
 
 # CORS setup - only allow requests from specified frontend URL
 CORS(app, resources={
-    r"/api/*": {
+    r"/api/chat": {
         "origins": [FRONTEND_URL],  # Only allow requests from the specified frontend URL
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
