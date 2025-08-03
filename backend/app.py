@@ -13,10 +13,15 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Simple CORS setup for deployment
+# Get frontend URL for CORS
+FRONTEND_URL = os.getenv('FRONTEND_URL')
+if not FRONTEND_URL:
+    raise ValueError("FRONTEND_URL environment variable is required")
+
+# CORS setup - only allow requests from specified frontend URL
 CORS(app, resources={
     r"/api/*": {
-        "origins": "*",  # Allow all origins for simple deployment
+        "origins": [FRONTEND_URL],  # Only allow requests from the specified frontend URL
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True

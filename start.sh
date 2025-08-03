@@ -36,12 +36,13 @@ cd ..
 # Start frontend
 echo "🌐 Starting frontend server..."
 cd frontend
-python3 -m http.server 8000 &
+npm install
+npm run dev &
 FRONTEND_PID=$!
 
 echo ""
 echo "✅ Servers started successfully!"
-echo "🌐 Frontend: http://localhost:8000"
+echo "🌐 Frontend: http://localhost:5173"
 echo "🔧 Backend API: http://localhost:5001"
 echo ""
 echo "Press Ctrl+C to stop both servers"

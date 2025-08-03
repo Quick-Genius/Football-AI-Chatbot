@@ -2,6 +2,10 @@
 
 A production-ready AI chatbot focused on football/soccer topics, powered by Google's Gemini AI.
 
+## 🌐 Live Demo
+
+**Deployment Link:** [https://ai-chatbot-kappa-orpin-22.vercel.app/](https://ai-chatbot-kappa-orpin-22.vercel.app/)
+
 ## Features
 
 - 🤖 Intelligent football-focused conversations
