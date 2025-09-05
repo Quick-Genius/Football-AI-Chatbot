@@ -71,12 +71,6 @@ A production-ready AI chatbot focused on football/soccer topics, powered by Goog
    http://localhost:8000
    ```
 
-Both scripts will:
-- Set up the virtual environment
-- Install dependencies
-- Start both backend and frontend servers
-- Show you the URLs to access the application
-
 ## Usage
 
 1. Make sure both the backend (port 5001) and frontend (port 8000) servers are running
