@@ -71,20 +71,6 @@ A production-ready AI chatbot focused on football/soccer topics, powered by Goog
    http://localhost:8000
    ```
 
-## Quick Start (Recommended)
-
-For the easiest deployment, use the provided startup scripts:
-
-### Development Mode
-```bash
-./start.sh
-```
-
-### Production Mode (with Gunicorn)
-```bash
-./start-production.sh
-```
-
 Both scripts will:
 - Set up the virtual environment
 - Install dependencies
